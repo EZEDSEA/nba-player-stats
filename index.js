@@ -1,12 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const port = 4000;
+const PORT = process.env.PORT || 4000;
 
 const cheerio = require("cheerio");
 const fetch = require("node-fetch");
 
-const YASPORTS_URL = "https://yasports.dbpn.com/history_v3.aspx/GetHistoryHTML";
+const URL =
+  process.env.URL || "https://yasports.dbpn.com/history_v3.aspx/GetHistoryHTML";
 
 class HTTPResponseError extends Error {
   constructor(response, ...args) {
@@ -24,7 +25,7 @@ const checkStatus = (response) => {
 };
 
 // app.use(cors());
-const whitelist = ["http://localhost:3000"];
+const whitelist = process.env.WHITELIST || ["http://localhost:3000"];
 
 app.use(
   cors({
@@ -71,7 +72,7 @@ app.get("/acr", async (req, res) => {
         //   Result: "ALL",
       },
     };
-    const response = await fetch(YASPORTS_URL, {
+    const response = await fetch(URL, {
       method: "post",
       body: JSON.stringify(body),
       headers: {
@@ -170,6 +171,6 @@ app.get("/acr", async (req, res) => {
   res.send(pData);
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`App listening at http://localhost:${PORT}`);
 });

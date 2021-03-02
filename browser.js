@@ -6,7 +6,11 @@ async function startBrowser(headless = true) {
     console.log("Opening the browser......");
     browser = await puppeteer.launch({
       headless,
-      args: ["--disable-setuid-sandbox"],
+      executablePath: "/Applications/Chromium.app/Contents/MacOS/Chromium",
+      args: [
+        // "--no-sandbox",
+        "--disable-gpu",
+      ],
       ignoreHTTPSErrors: true,
     });
   } catch (err) {

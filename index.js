@@ -51,15 +51,10 @@ app.use(
 //   next();
 // });
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-app.get("/acr", async (req, res) => {
-  const { query } = req;
-
+async function parseBetHistory(query, res) {
   const { token = "" } = query;
   let { weeks = 0 } = query;
+
   let pData = [];
 
   while (weeks > 0) {
@@ -125,6 +120,7 @@ app.get("/acr", async (req, res) => {
           let betResult = "";
           let betGameResult = "";
           let betDate = "";
+          let betSpread = "";
 
           if (betTicket) {
             const ticket = betTicket.split("Game start");
@@ -139,13 +135,18 @@ app.get("/acr", async (req, res) => {
 
             const betGame = betDet[0].split("(");
             const betDetail = betGame[0];
+            const betSpreadOdds = betGame[0]
+              .substr(betDetail.search(/[-+]\d/), betDetail.length - 1)
+              .trim();
+
+            betOdds = betSpreadOdds.match(/[+-]\d{3,}/g)[0];
+            if (betOdds !== betSpreadOdds) {
+              betSpread = betSpreadOdds.match(/[+-]\d+\W/g)[0];
+            }
 
             betDetails = betGameDet[0];
             betPlaced = betGame[0]
-              .substr(0, betDetail.search(/[-+]\d/) - 1)
-              .trim();
-            betOdds = betGame[0]
-              .substr(betDetail.search(/[-+]\d/), betDetail.length - 1)
+              .substring(0, betDetail.search(/[-+]\d/) - 1)
               .trim();
             betResult = betDet[1].trim();
             betGameResult = betResults[1].trim();
@@ -166,6 +167,7 @@ app.get("/acr", async (req, res) => {
             betTicket,
             betDetails,
             betPlaced,
+            betSpread,
             betOdds,
             betGameResult,
             betResult,
@@ -187,7 +189,36 @@ app.get("/acr", async (req, res) => {
 
     weeks--;
   }
-  res.send(pData);
+  return pData;
+}
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+app.get("/acr", async (req, res) => {
+  const { query } = req;
+  const { account = "", cur = "1.30", acctPer = "100%" } = query;
+  let data = await parseBetHistory(query, res);
+
+  data = data
+    .filter((row) => row.transType.toLowerCase() !== "disbursement")
+    .filter((row) => row.betResult.toUpperCase() !== "N/A CANCEL")
+    .map((row) => ({
+      date: row.betDate,
+      account,
+      bet: row.betDetails,
+      odds: row.betOdds,
+      betBase: row.betResult === "WlN" ? row.result : row.toRisk,
+      grade: row.betResult.substr(0, 1),
+      live: "",
+      cur,
+      acctPer,
+      toRisk: row.toRisk,
+      result: row.result,
+    }));
+
+  res.send(data);
 });
 
 app.listen(PORT, () => {

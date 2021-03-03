@@ -104,6 +104,18 @@ app.get("/acr", async (req, res) => {
             ? riskTicket.split("-")[1].split(":")[1].trim()
             : "";
 
+          /*
+            MU - Saints vrs Tricked: Saints To Win 10 Rds (Map 3) [95092] No +292 (Yes vrs No)N/A CANCEL
+            Score: Yes() - No()
+            Game start 02/22/2021 03:00 AM
+            */
+
+          /*
+            MU - [92592] No +239 (Yes vrs No)LOSE
+            Score: Yes(1) - No(0)
+            Game start 02/15/2021 03:07 AM
+            */
+
           // String is being split on the following:
           // 'MU - [96393] No Bounty Hunter +185 (No Bounty Hunter vrs NoUndying)WINScore: No Bounty Hunter(2) - NoUndying(0)Game start 02/01/2021 07:34 AM',
           const betTicket = $(elem).find(".pick-ticket").text();
@@ -117,18 +129,25 @@ app.get("/acr", async (req, res) => {
           if (betTicket) {
             const ticket = betTicket.split("Game start");
             const betResults = ticket[0].split("Score:");
-            const betGameDet = betResults[0].split(")");
-            const betDet = betGameDet[0].split("]")[1];
-            const betGame = betDet.split("(");
 
-            betDetails = betGame[1];
+            const betGameDet = betResults[0].split(/\[.+\]/);
+            const betDet = betGameDet[1].split(")");
+
+            // if (typeof betDet !== "string") {
+            //   throw `A parsing error occurred with: \n ${betGameDet}`;
+            // }
+
+            const betGame = betDet[0].split("(");
+            const betDetail = betGame[0];
+
+            betDetails = betGameDet[0];
             betPlaced = betGame[0]
-              .substr(0, betDet.search(/[-+]\d/) - 1)
+              .substr(0, betDetail.search(/[-+]\d/) - 1)
               .trim();
             betOdds = betGame[0]
-              .substr(betDet.search(/[-+]\d/), betDet.length - 1)
+              .substr(betDetail.search(/[-+]\d/), betDetail.length - 1)
               .trim();
-            betResult = betGameDet[1].trim();
+            betResult = betDet[1].trim();
             betGameResult = betResults[1].trim();
             betDate = ticket[1].trim();
           }
@@ -158,10 +177,10 @@ app.get("/acr", async (req, res) => {
           });
         });
       } catch (e) {
-        console.log("There was an error in processing: ", e);
+        console.error(e);
       }
     } catch (e) {
-      console.log("The requested site returned an error: ", e);
+      console.error("The requested site returned an error: ", e);
       const errorBody = await response.text();
       res.send(errorBody);
     }

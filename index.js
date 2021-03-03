@@ -62,7 +62,7 @@ app.get("/acr", async (req, res) => {
   let { weeks = 0 } = query;
   let pData = [];
 
-  while (weeks !== -1) {
+  while (weeks > 0) {
     const body = {
       dataJson: {
         WeeksBack: weeks,
